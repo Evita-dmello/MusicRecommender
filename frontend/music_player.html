@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Music Player</title>
+  <link rel="stylesheet" href="/MusicRecommender/frontend/music_player.css" />
+  <script type="module" src="/MusicRecommender/frontend/firebase-config.js"></script>
+</head>
+<body>
+  <div class="player-container">
+    <img id="album-art" src="" alt="Album Art" />
+    <h2 id="track-name">Track Name</h2>
+    <p id="artist-name">Artist</p>
+
+    <audio id="audio" controls autoplay></audio>
+    <p id="audio-error" style="color: red;"></p>
+
+    <div class="controls">
+        <button onclick="rewind()">⏪</button>
+        <button onclick="togglePlay()">⏯</button>
+        <button onclick="forward()">⏩</button>
+        <button id="nextPageBtn">➡️ Next</button>
+    </div>
+
+    <button id="backBtn" onclick="goBack()">🔙 Back to Suggestions</button>
+
+    
+  </div>
+
+  <script type="module">
+    import { db, auth } from '/MusicRecommender/frontend/firebase/firebase-config.js';
+    import { doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-lite.js";
+
+    const audio = document.getElementById("audio");
+    const playerContainer = document.querySelector(".player-container");
+    const track = JSON.parse(localStorage.getItem("selectedTrack"));
+
+    if (track) {
+      document.getElementById("album-art").src = track.album.images[0]?.url || "";
+      document.getElementById("track-name").textContent = track.name || "Unknown Track";
+      document.getElementById("artist-name").textContent = track.artists[0]?.name || "Unknown Artist";
+
+      console.log("Preview URL:", track.preview_url);
+
+      if (track.preview_url && track.preview_url.endsWith(".mp3")) {
+        audio.src = track.preview_url;
+        audio.controls = true;
+        audio.preload = "auto";
+        audio.play().catch(err => {
+          console.log("Autoplay prevented. User needs to click play.", err);
+        });
+      } else {
+        showSpotifyFallback();
+      }
+    } else {
+      alert("No track selected.");
+    }
+
+    function showSpotifyFallback() {
+      audio.src = "";
+      audio.controls = false;
+      document.getElementById("audio-error").textContent = "Audio preview not supported. Open in Spotify.";
+      if (!document.querySelector('.spotify-link')) {
+        const link = document.createElement('a');
+        link.href = track.external_urls?.spotify || "#";
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "🎵 Open full song on Spotify";
+        link.classList.add('spotify-link');
+        playerContainer.appendChild(link);
+      }
+    }
+
+    window.togglePlay = function () {
+      if (audio.paused) {
+        audio.play();
+      } else {
+        audio.pause();
+      }
+    };
+
+    window.forward = function () {
+      audio.currentTime += 10;
+    };
+
+    window.rewind = function () {
+      audio.currentTime -= 10;
+    };
+
+    async function saveToFavorites() {
+      const user = auth.currentUser;
+      if (user) {
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, {
+          favorites: arrayUnion(track)
+        });
+        alert("Added to favorites!");
+      }
+    }
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "/MusicRecommender/frontend/music_suggestions.html";
+    });
+
+    document.getElementById("nextPageBtn").addEventListener("click", () => {
+      window.location.href = "/MusicRecommender/frontend/favorites.html";
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      audio.addEventListener('error', () => {
+        console.error("Audio error code:", audio.error?.code);
+        if (audio.error?.code === 4) {
+          showSpotifyFallback();
+        }
+      });
+
+      audio.addEventListener('canplaythrough', () => {
+        audio.play().catch(e => {
+          console.error("Playback failed:", e);
+          document.getElementById("audio-error").textContent = "Could not autoplay the track. Please click Play.";
+        });
+      });
+
+      // Store in recently played
+      let played = JSON.parse(localStorage.getItem("recentlyPlayed") || "[]");
+      played.unshift(track);  // add to beginning
+      played = played.slice(0, 5);  // limit to 5
+      localStorage.setItem("recentlyPlayed", JSON.stringify(played));
+
+
+      audio.addEventListener('play', () => {
+        document.getElementById("audio-error").textContent = "";
+      });
+    });
+  </script>
+</body>
+</html>
