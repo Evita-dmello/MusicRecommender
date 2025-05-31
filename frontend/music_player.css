@@ -1,0 +1,86 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #d3cce3, #e9e4f0);
+  color: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+}
+
+.player-container {
+  background-color: rgb(231, 229, 229);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 0 20px #000;
+}
+
+img#album-art {
+  width: 250px;
+  height: 250px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  object-fit: cover;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+h2, p {
+  margin: 10px 0;
+}
+
+.controls button {
+  background-color: silver;
+  color: #333;
+  padding: 12px;
+  margin: 10px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  transition: transform 0.2s;
+}
+
+.controls button:hover {
+  transform: scale(1.1);
+  background-color: #f0f0f0;
+}
+
+#backBtn {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: black; /* Spotify green */
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 25px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+#backBtn:hover,
+#backBtn:focus {
+  background-color: rgb(99, 98, 98);
+  outline: none;
+}
+
+.spotify-link {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: black; /* Spotify green */
+  color: white;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 25px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.spotify-link:hover,
+.spotify-link:focus {
+  background-color: rgb(99, 98, 98);
+  outline: none;
+}
