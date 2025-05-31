@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome to MoodTunes</title>
+  <link rel="stylesheet" href="/MusicRecommender/frontend/css_files/style_welcome.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <script type="module" src="/MusicRecommender/firebase/firebase-config.js"></script>
+</head>
+<body>
+  <div class="welcome-container">
+    <h1>🎵 Welcome to MoodTunes</h1>
+    <h2 id="welcome-message">Hi there!</h2>
+    <p class="quote">"Where words fail, music speaks."</p>
+    <div class="btn-group">
+      <button id="continue-btn">Continue</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "/MusicRecommender/firebase/firebase-config.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const welcomeMessage = document.getElementById("welcome-message");
+    const continueBtn = document.getElementById("continue-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          welcomeMessage.textContent = `Hi ${userData.name}!`;
+        } else {
+          welcomeMessage.textContent = `Hi ${user.email}!`;
+        }
+      } else {
+        window.location.href = "/MusicRecommender/frontend/html_files/login.html";
+      }
+    });
+
+    continueBtn.addEventListener("click", () => {
+      window.location.href = "/MusicRecommender/frontend/html_files/mood_selector.html";
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "/MusicRecommender/frontend/html_files/login.html";
+    });
+  </script>
+</body>
+</html>
