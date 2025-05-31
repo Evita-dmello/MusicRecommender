@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Profile</title>
+  <link rel="stylesheet" href="/MusicRecommender/frontend/style_profile.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>👤 Profile Page</h1>
+    
+    <!-- Debugging section -->
+    <div class="debug-info" id="debugInfo"></div>
+
+    <div class="mood-history">
+      <h2>🧠 Mood History</h2>
+      <div id="moodHistory"></div>
+    </div>
+
+    <div class="favorites">
+      <h2>🎵 Saved Favorites</h2>
+      <div id="favoriteSongs"></div>
+    </div>
+
+    <button class="btn" onclick="window.location.href='thankyou.html'">NEXT</button>
+  </div>
+
+  <script type="module">
+    const firebaseConfig = {
+      apiKey: "AIzaSyBo1YEQgkeS00iWAeaQO3NwFYD2nloFAJk", // insert the real key
+      authDomain: "moodtunes-7b8c5.firebaseapp.com",
+      projectId: "moodtunes-7b8c5",
+      storageBucket: "moodtunes-7b8c5.appspot.com", // fixed `.app` to `.appspot.com`
+      messagingSenderId: "261670551160",
+      appId: "1:261670551160:web:aeb0fa0da40edb8a94b78d"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const moodDiv = document.getElementById("moodHistory");
+    const favDiv = document.getElementById("favoriteSongs");
+    const debugDiv = document.getElementById("debugInfo");
+
+    onAuthStateChanged(auth, async user => {
+      debugDiv.innerHTML = "Checking authentication...";
+      
+      if (!user) {
+        debugDiv.innerHTML += "\nNo user found, redirecting to login...";
+        window.location.href = "index.html";
+        return;
+      }
+
+      debugDiv.innerHTML += `\nUser authenticated: ${user.email || user.uid}`;
+      debugDiv.innerHTML += `\nFetching user data from Firestore...`;
+
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        debugDiv.innerHTML += `\nDocument exists: ${userSnap.exists()}`;
+
+        if (!userSnap.exists()) {
+          moodDiv.innerHTML = "<p class='error-message'>No user data found.</p>";
+          favDiv.innerHTML = "<p class='error-message'>No favorites found.</p>";
+          return;
+        }
+
+        const data = userSnap.data();
+        debugDiv.innerHTML += `\nUser data fields: ${Object.keys(data).join(", ")}`;
+        
+        // Enhanced mood history check - handles your specific data structure
+        let moodHistory = [];
+        
+        // Check all possible mood fields
+        if (data.moodHistory && data.moodHistory.length > 0) {
+          moodHistory = data.moodHistory;
+        } 
+        else if (data.moodLabel) {
+          moodHistory = [data.moodLabel];
+        }
+        else if (data.selectedWood) {  // This appears to be a typo in your database
+          moodHistory = [data.selectedWood];
+        }
+        else if (data.mood) {
+          moodHistory = [data.mood];
+        }
+
+        debugDiv.innerHTML += `\nMood data found: ${JSON.stringify(moodHistory)}`;
+
+        if (moodHistory.length === 0) {
+          moodDiv.innerHTML = "<p>No mood history yet.</p>";
+        } else {
+          moodDiv.innerHTML = moodHistory.map(mood => {
+            // Handle case where mood might be an object
+            const moodValue = typeof mood === 'object' ? mood.mood || mood.value || mood.name : mood;
+            return `<span class="mood-tag">${moodValue}</span>`;
+          }).join("");
+        }
+
+        // Favorites check
+        const favorites = data.favorites || data.savedSongs || [];
+        debugDiv.innerHTML += `\nFavorites found: ${favorites.length} entries`;
+
+        if (favorites.length === 0) {
+          favDiv.innerHTML = "<p>No favorites saved.</p>";
+        } else {
+          favDiv.innerHTML = favorites.map(song => `
+            <div class="song-card">
+              <img src="${song.cover || 'https://via.placeholder.com/60'}" alt="Cover" />
+              <div class="song-info">
+                <h4>${song.name || 'Unknown'}</h4>
+                <p>${song.artist || 'Unknown artist'}</p>
+                ${song.preview ? `<audio controls src="${song.preview}"></audio>` : ""}
+              </div>
+            </div>
+          `).join("");
+        }
+
+      } catch (error) {
+        debugDiv.innerHTML += `\nError: ${error.message}`;
+        console.error("Error:", error);
+        moodDiv.innerHTML = "<p class='error-message'>Error loading mood history.</p>";
+        favDiv.innerHTML = "<p class='error-message'>Error loading favorites.</p>";
+      }
+    });
+  </script>
+</body>
+</html>
