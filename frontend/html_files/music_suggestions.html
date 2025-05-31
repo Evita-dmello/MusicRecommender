@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Suggested Music | MoodTunes</title>
   <link rel="stylesheet" href="/MusicRecommender/frontend/css_files/style_music.css" />
-  <script type="module" src="/MusicRecommender/firebase/firebase-config.js"></script>
+  <script type="module" src="/MusicRecommender/frontend/firebase/firebase-config.js"></script>
 </head>
 <body>
   <div class="container">
@@ -14,14 +14,14 @@
   </div>
 
   <script type="module">
-  import { auth, db } from "/MusicRecommender/firebase/firebase-config.js";
+  import { auth, db } from "/MusicRecommender/frontend/firebase/firebase-config.js";
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
   import { doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
   const songList = document.getElementById('song-list');
 
   // 🔐 Get Spotify access token from backend
-  const res = await fetch("http://localhost:3001/spotify-token");
+  const res = await fetch("https://musicrecommender-lq8w.onrender.com");
   const data = await res.json();
   const SPOTIFY_ACCESS_TOKEN = data.access_token;
 
