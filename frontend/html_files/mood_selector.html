@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Select Your Mood</title>
+  <link rel="stylesheet" href="/MusicRecommender/frontend/css_files/style_mood.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>How are you feeling today?</h1>
+    <div class="mood-container">
+      <!-- Mood Cards -->
+      <div class="mood-card" onclick="selectMood(this, 'anger', '😠 Anger')"><span class="emoji">😠</span><p>Anger</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'fear', '😨 Fear')"><span class="emoji">😨</span><p>Fear</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'happiness', '😊 Happiness')"><span class="emoji">😊</span><p>Happiness</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'sadness', '😢 Sadness')"><span class="emoji">😢</span><p>Sadness</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'surprise', '😮 Surprise')"><span class="emoji">😮</span><p>Surprise</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'joy', '😄 Joy')"><span class="emoji">😄</span><p>Joy</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'irritation', '😤 Irritation')"><span class="emoji">😤</span><p>Irritation</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'anxiety', '😰 Anxiety')"><span class="emoji">😰</span><p>Anxiety</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'worry', '😟 Worry')"><span class="emoji">😟</span><p>Worry</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'frustration', '🤬 Frustration')"><span class="emoji">🤬</span><p>Frustration</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'stressed', '😫 Stressed')"><span class="emoji">😫</span><p>Stressed</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'shocked', '😱 Shocked')"><span class="emoji">😱</span><p>Shocked</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'loneliness', '😔 Loneliness')"><span class="emoji">😔</span><p>Loneliness</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'crying', '😭 Crying')"><span class="emoji">😭</span><p>Crying</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'disgust', '🤢 Disgust')"><span class="emoji">🤢</span><p>Disgust</p></div>
+      <div class="mood-card" onclick="selectMood(this, 'love', '❤️ Love')"><span class="emoji">❤️</span><p>Love</p></div>
+    </div>
+
+    <div class="button-container">
+      <button id="nextBtn" disabled>Next</button>
+    </div>
+  </div>
+
+  <!-- Script as Module -->
+  <script type="module">
+    import { auth, db } from "/MusicRecommender/firebase/firebase-config.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+    import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    let selectedMood = null;
+    let currentUser = null;
+
+    // Monitor user login
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "/MusicRecommender/frontend/login.html";
+      } else {
+        currentUser = user;
+      }
+    });
+
+    window.selectMood = async function (element, mood, label) {
+      if (!currentUser) return;
+
+      selectedMood = mood;
+
+      // Highlight selected mood
+      document.querySelectorAll('.mood-card').forEach(card => card.classList.remove('selected'));
+      element.classList.add('selected');
+
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, {
+          selectedMood: mood,
+          moodLabel: label
+        });
+
+        document.getElementById("nextBtn").disabled = false;
+        console.log("Mood saved to Firestore:", mood);
+      } catch (err) {
+        console.error("Error saving mood:", err);
+        alert("Failed to save mood. Please try again.");
+      }
+    };
+
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      if (!selectedMood) {
+        alert("Please select a mood first!");
+        return;
+      }
+      window.location.href = "/MusicRecommender/frontend/html_files/genre.html";
+    });
+  </script>
+</body>
+</html>
