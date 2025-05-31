@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Suggested Music | MoodTunes</title>
+  <link rel="stylesheet" href="/MusicRecommender/frontend/css_files/style_music.css" />
+  <script type="module" src="/MusicRecommender/firebase/firebase-config.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Suggested Songs for You</h1>
+    <div id="song-list" class="song-list"></div>
+  </div>
+
+  <script type="module">
+  import { auth, db } from "/MusicRecommender/firebase/firebase-config.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+  import { doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+  const songList = document.getElementById('song-list');
+
+  // 🔐 Get Spotify access token from backend
+  const res = await fetch("http://localhost:3001/spotify-token");
+  const data = await res.json();
+  const SPOTIFY_ACCESS_TOKEN = data.access_token;
+
+  // 🎵 Fetch songs based on mood and genre
+  async function fetchSongs(mood, genre) {
+    const query = `${mood} ${genre}`;
+    const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`, {
+      headers: { Authorization: `Bearer ${SPOTIFY_ACCESS_TOKEN}` }
+    });
+    const data = await res.json();
+    return data.tracks?.items || [];
+  }
+
+  // 🎨 Render song cards
+  function renderSongs(songs, userId) {
+    songList.innerHTML = '';
+    songs.forEach(song => {
+      const card = document.createElement('div');
+      card.className = 'song-card';
+      card.innerHTML = `
+        <img src="${song.album.images[0]?.url}" alt="Album Cover">
+        <div class="song-info">
+          <h3>${song.name}</h3>
+          <p>${song.artists[0].name}</p>
+          <audio controls src="${song.preview_url || ''}"></audio>
+          <div class="buttons">
+            <button class="fav-btn" data-id="${song.id}">❤️ Favorite</button>
+            <button class="play-btn" data-id="${song.id}">▶️ Play</button>
+          </div>
+        </div>
+      `;
+      songList.appendChild(card);
+    });
+
+    // 🎯 Button click handler
+    document.querySelectorAll(".fav-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const songId = btn.dataset.id;
+        const song = songs.find(s => s.id === songId);
+        await saveFavorite(userId, song);
+      });
+    });
+
+    document.querySelectorAll(".play-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const songId = btn.dataset.id;
+        const song = songs.find(s => s.id === songId);
+        localStorage.setItem("selectedTrack", JSON.stringify(song));
+        window.location.href = "/MusicRecommender/frontend/html_files/music_player.html";
+      });
+    });
+  }
+
+  // 💾 Save song to Firestore favorites
+  async function saveFavorite(uid, song) {
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+    const existingFavs = userSnap.data()?.favorites || [];
+
+    // Check if song already saved
+    const alreadyExists = existingFavs.some(fav => fav.id === song.id);
+    if (alreadyExists) {
+      alert("Already in Favorites!");
+      return;
+    }
+
+    await updateDoc(userRef, {
+      favorites: arrayUnion({
+        id: song.id,
+        name: song.name,
+        artist: song.artists[0].name,
+        preview: song.preview_url,
+        cover: song.album.images[0]?.url
+      })
+    });
+
+    alert("Saved to Favorites!");
+  }
+
+  // 🔁 On user login, fetch & render songs
+  onAuthStateChanged(auth, async user => {
+    if (!user) {
+      window.location.href = "/MusicRecommender/frontend/html_files/login.html";
+      return;
+    }
+
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    const data = userDoc.data();
+    const mood = data.selectedMood;
+    const genre = data.genre || data.selectedGenre;
+
+    const songs = await fetchSongs(mood, genre);
+    renderSongs(songs, user.uid);
+  });
+</script>
+
+</body>
+</html>
+
