@@ -1,0 +1,37 @@
+body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(to right, #d3cce3, #e9e4f0);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: black;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .message-box {
+      animation: fadeInUp 1s ease-out forwards;
+      opacity: 0;
+    }
+
+    .message-box h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .message-box p {
+      font-size: 1.2rem;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
