@@ -39,7 +39,7 @@
           welcomeMessage.textContent = `Hi ${user.email}!`;
         }
       } else {
-        window.location.href = "/MusicRecommender/frontend/html_files/login.html";
+        window.location.href = "/MusicRecommender/frontend/html_files/index.html";
       }
     });
 
@@ -49,7 +49,7 @@
 
     logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
-      window.location.href = "/MusicRecommender/frontend/html_files/login.html";
+      window.location.href = "/MusicRecommender/frontend/html_files/index.html";
     });
   </script>
 </body>
