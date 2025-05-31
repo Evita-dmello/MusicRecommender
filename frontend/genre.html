@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Your Genre</title>
+  <link rel="stylesheet" href="/MusicRecommender/frontend/style_genre.css" />
+  <script type="module" src="/MusicRecommender/frontend/firebase-config.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h2>Select a Genre 🎵</h2>
+    <div class="genre-grid">
+      <div class="genre-card" data-genre="Pop">🎤 Pop</div>
+      <div class="genre-card" data-genre="Hip-hop">🎧 Hip-hop</div>
+      <div class="genre-card" data-genre="Rock">🎸 Rock</div>
+      <div class="genre-card" data-genre="K-pop">💫 K-pop</div>
+      <div class="genre-card" data-genre="Afrobeats">🌍 Afrobeats</div>
+      <div class="genre-card" data-genre="Bollywood">🎬 Bollywood</div>
+      <div class="genre-card" data-genre="Jazz">🎷 Jazz</div>
+      <div class="genre-card" data-genre="Classical">🎻 Classical</div>
+    </div>
+    <div class="genre-buttons">
+      <button id="back-btn">⬅️ Back</button>
+      <button id="next-btn" disabled>Next ➡️</button>
+    </div>
+  </div>
+
+  <audio id="hover-sound" src="/MusicRecommender/frontend/hover.wav" preload="auto"></audio>
+
+  <script type="module">
+  import { auth, db } from "/MusicRecommender/frontend/firebase/firebase-config.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+  import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+  let selectedGenre = null;
+  const cards = document.querySelectorAll(".genre-card");
+  const nextBtn = document.getElementById("next-btn");
+  const hoverSound = document.getElementById("hover-sound");
+  let currentUser = null;
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentUser = user;
+    } else {
+      window.location.href = "/MusicRecommender/frontend/index.html";
+    }
+  });
+
+  cards.forEach(card => {
+    // Play hover sound
+    card.addEventListener("mouseenter", () => {
+      hoverSound.currentTime = 0;
+      hoverSound.play();
+    });
+
+    // Handle genre selection
+    card.addEventListener("click", () => {
+      // Deselect all cards
+      cards.forEach(c => c.classList.remove("selected"));
+      // Select clicked card
+      card.classList.add("selected");
+
+      selectedGenre = card.dataset.genre;
+      nextBtn.disabled = false;
+    });
+  });
+
+  document.getElementById("back-btn").addEventListener("click", () => {
+    window.location.href = "/MusicRecommender/frontend/mood_selector.html";
+  });
+
+  nextBtn.addEventListener("click", async () => {
+    if (currentUser && selectedGenre) {
+      const userRef = doc(db, "users", currentUser.uid);
+      await updateDoc(userRef, {
+        genre: selectedGenre
+      });
+      window.location.href = "/MusicRecommender/frontend/music_suggestions.html";
+    }
+  });
+</script>
+
+</body>
+</html>
